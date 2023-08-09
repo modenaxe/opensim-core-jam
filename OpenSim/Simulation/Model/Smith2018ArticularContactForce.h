@@ -494,12 +494,12 @@ public:
 	
     //tri proximity [LM]
     SimTK::Vector getTargetTriangleProximity(const SimTK::State& state) const {
-        this->extendRealizePosition(state)
+        this->extendRealizePosition(state);
         return this->getCacheVariableValue
             (state, this->_target_triangle_proximityCV);
     }
     SimTK::Vector getCastingTriangleProximity(const SimTK::State& state) const {
-        this->extendRealizePosition(state)
+        this->extendRealizePosition(state);
         return getCacheVariableValue
             (state, this->_casting_triangle_proximityCV);
     }
