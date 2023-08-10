@@ -483,27 +483,21 @@ public:
     }
 
     //tri proximity
-    //SimTK::Vector getTargetTriangleProximity(const SimTK::State& state) const {
-    //    return this->getCacheVariableValue
-    //        (state, this->_target_triangle_proximityCV);
-    //}
-    //SimTK::Vector getCastingTriangleProximity(const SimTK::State& state) const {
-     //   return getCacheVariableValue
-      //      (state, this->_casting_triangle_proximityCV);
-    //}
-	
-    //tri proximity [LM]
     SimTK::Vector getTargetTriangleProximity(const SimTK::State& state) const {
-        this->extendRealizePosition(state);
-        return this->getCacheVariableValue
-            (state, this->_target_triangle_proximityCV);
+	    if (!this->isCacheVariableValid(state, this->_target_triangle_proximityCV)) {
+		    realizeContactMetricCaches(state);
+	    }
+	    
+	    return this->getCacheVariableValue
+		    (state, this->_target_triangle_proximityCV);
     }
     SimTK::Vector getCastingTriangleProximity(const SimTK::State& state) const {
-        this->extendRealizePosition(state);
-        return getCacheVariableValue
-            (state, this->_casting_triangle_proximityCV);
+	    if (!this->isCacheVariableValid(state, this->_casting_triangle_proximityCV)) {
+		    realizeContactMetricCaches(state);
+	    }
+	    return this->getCacheVariableValue
+		    (state, this->_casting_triangle_proximityCV);
     }
-	
     //tri pressure
     SimTK::Vector getTargetTrianglePressure(const SimTK::State& state) const {
         return this->getCacheVariableValue
