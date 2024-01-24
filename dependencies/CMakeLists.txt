@@ -2,9 +2,10 @@
 # compile and install all OpenSim dependencies. Using super-build is optional.
 # OpenSim does not use this file directly.
 
-project(OpenSimDependencies)
 # We require a version of CMake that supports Visual Studio 2015.
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.5)
+
+project(OpenSimDependencies)
 
 include(ExternalProject)
 include(CMakeParseArguments)
@@ -176,13 +177,13 @@ SetDefaultCMakeBuildType()
 AddDependency(NAME       ezc3d
               DEFAULT    OFF
               GIT_URL    https://github.com/pyomeca/ezc3d.git
-              GIT_TAG    Release_1.5.0
+              GIT_TAG    Release_1.5.6
               CMAKE_ARGS -DBUILD_EXAMPLE:BOOL=OFF)
 
 AddDependency(NAME       simbody
               DEFAULT    ON
               GIT_URL    https://github.com/simbody/simbody.git
-              GIT_TAG    e855d954a786128c3271a3406d7bda782e7c4c4f
+              GIT_TAG    589e931f4a127830a5876ee4dd8f327b47361504
               CMAKE_ARGS -DBUILD_EXAMPLES:BOOL=OFF
                          -DBUILD_TESTING:BOOL=OFF
                          ${SIMBODY_EXTRA_CMAKE_ARGS})
@@ -202,15 +203,11 @@ AddDependency(NAME       spdlog
                          -DSPDLOG_BUILD_EXAMPLE:BOOL=OFF
                          -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON)
 
-AddDependency(NAME hdf5
-              DEFAULT ON
-              GIT_URL https://github.com/HDFGroup/hdf5.git
-              GIT_TAG hdf5-1_12_0
-              CMAKE_ARGS -DBUILD_STATIC_LIBS:BOOL=ON
-                         -DBUILD_TESTING:BOOL=OFF
-                         -DHDF5_CPP_LIB:BOOL=ON
-                         -DHDF5_BUILD_EXAMPLES:BOOL=OFF
-                         -DHDF5_BUILD_TOOLS:BOOL=OFF)
+AddDependency(NAME       catch2
+              DEFAULT    ON
+              GIT_URL    https://github.com/catchorg/Catch2.git
+              GIT_TAG    v3.5.0)
+
 # Moco settings.
 # --------------
 option(OPENSIM_WITH_CASADI

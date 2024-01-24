@@ -1,4 +1,3 @@
-project(OpenSim)
 #
 # Build of OpenSim. There are three steps:
 #    (1) Choose appropriate platform
@@ -9,6 +8,7 @@ project(OpenSim)
 #----------------------------------------------------
 
 cmake_minimum_required(VERSION 3.15)
+project(OpenSim)
 
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
@@ -28,8 +28,8 @@ include(FeatureSummary)
 # OpenSim version.
 # ----------------
 set(OPENSIM_MAJOR_VERSION 4)
-set(OPENSIM_MINOR_VERSION 4)
-set(OPENSIM_PATCH_VERSION 1)
+set(OPENSIM_MINOR_VERSION 5)
+set(OPENSIM_PATCH_VERSION 0)
 
 # Don't include the patch version if it is 0.
 set(PATCH_VERSION_STRING)
@@ -600,10 +600,10 @@ if (NOT OPENSIM_PYTHON_CONDA)
     include(InstallRequiredSystemLibraries)
 endif()
 
-# C++11
+# C++14
 # -----
-set(CMAKE_CXX_STANDARD 11)
-# Using c++11 is not optional.
+set(CMAKE_CXX_STANDARD 14)
+# Using c++14 is not optional.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 

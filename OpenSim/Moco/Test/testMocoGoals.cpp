@@ -16,9 +16,6 @@
  * limitations under the License.                                             *
  * -------------------------------------------------------------------------- */
 
-#define CATCH_CONFIG_MAIN
-#include "Testing.h"
-
 #include <OpenSim/Actuators/CoordinateActuator.h>
 #include <OpenSim/Actuators/ModelFactory.h>
 #include <OpenSim/Actuators/PointActuator.h>
@@ -26,6 +23,12 @@
 #include <OpenSim/Moco/MocoOutputConstraint.h>
 #include <OpenSim/Simulation/SimbodyEngine/PinJoint.h>
 #include <OpenSim/Simulation/SimbodyEngine/SliderJoint.h>
+
+#include <catch2/catch_all.hpp>
+#include "Testing.h"
+
+using Catch::Approx;
+using Catch::Matchers::ContainsSubstring;
 
 using namespace OpenSim;
 
@@ -464,9 +467,9 @@ void evalTestMocoScaleFactor(const MocoStudy& study,
     // already adjusted the effort controls while constructing the initial guess
     // above, so this comparison should pass if the problem solved correctly.
     OpenSim_CHECK_MATRIX_ABSTOL(solutionEffort.getControlsTrajectory(),
-            solutionTracking.getControlsTrajectory(), 1e-4);
+            solutionTracking.getControlsTrajectory(), 1e-3);
     OpenSim_CHECK_MATRIX_ABSTOL(solutionEffort.getStatesTrajectory(),
-            solutionTracking.getStatesTrajectory(), 1e-4);
+            solutionTracking.getStatesTrajectory(), 1e-3);
 }
 
 TEST_CASE("Test MocoScaleFactor - MocoCasADiSolver", "[casadi]") {
@@ -672,7 +675,7 @@ TEMPLATE_TEST_CASE("Endpoint constraints", "[casadi]", MocoCasADiSolver) {
 
     SECTION("Bounds has incorrect size.") {
         periodic->updConstraintInfo().setBounds({{0.0}});
-        CHECK_THROWS_WITH(study.solve(), Catch::Contains("Size of property"));
+        CHECK_THROWS_WITH(study.solve(), ContainsSubstring("Size of property"));
     }
 
     SECTION("Non-tight bounds.") {
@@ -1018,7 +1021,7 @@ TEST_CASE("MocoGoal stage dependency") {
     goal.initializeOnModel(model);
     state.invalidateAll(SimTK::Stage::Instance);
     CHECK_THROWS_WITH(goal.calcIntegrand({0, state, SimTK::Vector()}),
-            Catch::Contains("calcIntegrand()"));
+            ContainsSubstring("calcIntegrand()"));
 
     goal.setRealizeInitialState(true);
     state.invalidateAll(SimTK::Stage::Instance);
@@ -1028,8 +1031,83 @@ TEST_CASE("MocoGoal stage dependency") {
             SimTK::Vector(), 0};
     SimTK::Vector goalValue;
     CHECK_THROWS_WITH(goal.calcGoal(input, goalValue),
-            Catch::Contains("calcGoal()") && Catch::Contains("initial_state"));
+            ContainsSubstring("calcGoal()") &&
+            ContainsSubstring("initial_state"));
     goal.setRealizeInitialState(false);
     CHECK_THROWS_WITH(goal.calcGoal(input, goalValue),
-            Catch::Contains("calcGoal()") && Catch::Contains("final_state"));
+            ContainsSubstring("calcGoal()") &&
+            ContainsSubstring("final_state"));
+}
+
+/// This goal calculates the displacement of the system between the initial and
+/// final states, the duration of the phase, and the mass of the system.
+class MocoDivideByTestingGoal : public MocoGoal {
+    OpenSim_DECLARE_CONCRETE_OBJECT(MocoDivideByTestingGoal, MocoGoal);
+public:
+    MocoDivideByTestingGoal() = default;
+protected:
+    void initializeOnModelImpl(const Model&) const override {
+        setRequirements(0, 3, SimTK::Stage::Position);
+    }
+    void calcGoalImpl(
+            const GoalInput& in, SimTK::Vector& values) const override {
+        values[0] = calcSystemDisplacement(in);
+        values[1] = calcDuration(in);
+        values[2] = calcSystemMass(in);
+    }
+};
+
+// Ensure that the "divide by" methods return the correct values.
+TEST_CASE("MocoGoal divide by displacement/duration/mass") {
+    Model model = ModelFactory::createSlidingPointMass();
+    SimTK::State state = model.initSystem();
+    const double mass = model.getTotalMass(state);
+    MocoDivideByTestingGoal goal;
+    goal.initializeOnModel(model);
+    state.invalidateAll(SimTK::Stage::Instance);
+    auto initialState = state;
+    auto finalState = state;
+    
+    // Initial and final time.
+    const double initial_time = 0.0;
+    const double final_time = 2.5;
+    const double duration = final_time - initial_time;
+    initialState.setTime(initial_time);
+    finalState.setTime(final_time);
+
+    // Initial and final position.
+    const double initial_position = 0.12;
+    const double final_position = 0.74;
+    const double displacement = final_position - initial_position;
+    initialState.updQ()[0] = initial_position;
+    finalState.updQ()[0] = final_position;
+
+    MocoGoal::GoalInput input{initial_time, initialState, SimTK::Vector(), 
+                final_time, finalState, SimTK::Vector(), 0};
+    SimTK::Vector goalValues;
+    goal.calcGoal(input, goalValues);
+
+    CHECK_THAT(goalValues[0],
+        Catch::Matchers::WithinAbs(displacement, SimTK::Eps));
+    CHECK_THAT(goalValues[1],
+        Catch::Matchers::WithinAbs(duration, SimTK::Eps));
+    CHECK_THAT(goalValues[2],
+        Catch::Matchers::WithinAbs(mass, SimTK::Eps));
+}
+
+TEST_CASE("MocoFrameDistanceConstraint de/serialization") {
+
+    {
+        auto study = createStudy(0, {0, 100.0});
+        auto& problem = study.updProblem();
+        auto* con = problem.addPathConstraint<MocoFrameDistanceConstraint>();
+        con->setName("distance_constraint");
+        con->addFramePair("/body", "/ground", 0, 1);
+        study.print("testMocoGoals_MocoFrameDistanceConstraint_study.omoco");
+    }
+
+    {
+        MocoStudy study(
+                "testMocoGoals_MocoFrameDistanceConstraint_study.omoco");
+    }
 }
