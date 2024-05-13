@@ -209,7 +209,7 @@ AddDependency(NAME       catch2
               GIT_TAG    v3.5.0)
 			  
 AddDependency(NAME 		hdf5
-              DEFAULT ON
+              DEFAULT 	ON
               GIT_URL https://github.com/HDFGroup/hdf5.git
               GIT_TAG hdf5-1_12_0
               CMAKE_ARGS -DBUILD_STATIC_LIBS:BOOL=ON
