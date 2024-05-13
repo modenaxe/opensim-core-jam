@@ -207,7 +207,17 @@ AddDependency(NAME       catch2
               DEFAULT    ON
               GIT_URL    https://github.com/catchorg/Catch2.git
               GIT_TAG    v3.5.0)
-
+			  
+AddDependency(NAME 		hdf5
+              DEFAULT ON
+              GIT_URL https://github.com/HDFGroup/hdf5.git
+              GIT_TAG hdf5-1_12_0
+              CMAKE_ARGS -DBUILD_STATIC_LIBS:BOOL=ON
+                         -DBUILD_TESTING:BOOL=OFF
+                         -DHDF5_CPP_LIB:BOOL=ON
+                         -DHDF5_BUILD_EXAMPLES:BOOL=OFF
+                         -DHDF5_BUILD_TOOLS:BOOL=OFF)
+						 
 # Moco settings.
 # --------------
 option(OPENSIM_WITH_CASADI
